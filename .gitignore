@@ -1,4 +1,16 @@
 
+# r-files
 .Rproj.user/
 .Rhistory
 *.Rproj
+.Rproj.user
+
+# cached files
+03_smoking_files/
+03_smoking_cache/
+
+# html
+*.html
+
+# pdf
+*.pdf
