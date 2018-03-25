@@ -1,0 +1,246 @@
+---
+title: "Students Seminar @Charite"
+author: "Joachim Krois"
+date: '2018-03-28'
+output:
+  pdf_document:
+    toc: yes
+  html_document:
+    code_folding: show
+    collapsed: no
+    toc: yes
+    toc_float: yes
+subtitle: The tidyverse
+always_allow_html: yes
+urlcolor: magenta
+---
+
+# Number of cigarettes smoked 
+
+In this analysis we focus on a data set originating from the [_Global Burden of Disease Study 2016 (GBD 2016)_](http://www.healthdata.org/gbd). THe data set `IHME_GBD_2016_COVARIATES_1980_2016_CUM_CIGS_5_YR_Y2017M09D05.csv` contains the __Total number of cigarettes or cigarette equivalents smoked by an age cohort in the past 5 years (Estimates assumed to be zero for age-groups 2-6)__. It can be downloaded via the [_Global Health Data Exchange_](http://ghdx.healthdata.org/gbd-2016) platform.
+
+
+## Loading the data
+
+The data set is stored on your local machine. Hence, we may apply the `read.csv` function built in into base R:
+
+```{r cache=T}
+cigs = read.csv("./datasets/IHME_GBD_2016_COVARIATES_1980_2016_CUM_CIGS_5_YR_Y2017M09D05.csv")
+```
+
+The data set contains `r nrow(cigs)` rows and `r ncol(cigs)` columns.
+
+Once the data is in your computers memory we inspect the column names by the command `colnames`:
+
+_Note: We use the `kable` function from the `knitr` package for a nicely formatted HTML output_
+
+```{r}
+knitr::kable(colnames(cigs))
+```
+
+
+## Subsetting
+
+Data cleaning is one of the most important tasks in any data analysis project. Here, we subset the raw data set by some columns of particular interest.
+
+Note the change in the dimensions of the `data.frame`  object.
+
+
+```{r}
+dim(cigs)
+cols_of_interest = c("location_name", "sex_label", 
+                    "age_group_name",  
+                    "val", "upper", "lower",
+                    "year_id")
+
+df = cigs[,cols_of_interest]
+dim(df)
+
+```
+
+
+## Exploratory data analysis
+
+In statistics, **exploratory data analysis (EDA)** is an approach to analyzing data sets to summarize their main characteristics, often with visual methods ([Wikipedia](https://en.wikipedia.org/wiki/Exploratory_data_analysis)).
+
+First we take a look a some particular features of the data set:
+
+
+**Gender**
+
+```{r}
+knitr::kable(unique(df$sex_label))
+```
+
+***
+
+**Age groups**
+
+```{r}
+knitr::kable(unique(df$age_group_name))
+```
+
+***
+
+**Location names**
+
+
+```{r}
+locations_num = length(unique(df$location_name))
+locations_num
+```
+
+There are `r locations_num` unique locations in the data set.
+
+***
+
+**Years of observations**
+
+```{r}
+range(df$year_id)
+```
+
+
+***
+
+**Number of cigarettes smoked**
+
+A [box plot](https://en.wikipedia.org/wiki/Box_plot) or boxplot is a method for graphically depicting the distribution of numerical data. 
+
+
+```{r}
+boxplot(df$val, horizontal = T)
+```
+
+
+## Feature engineering
+
+For the purpose of our analysis it is interesting to provide results on continental scale instated of country scale. Hence, we have to augment our data set. In order to look up for each country its Continent we rely on a contributed package named [`countrycode`](https://cran.r-project.org/web/packages/countrycode/index.html). The package is available on [CRAN](https://cran.r-project.org/), hence we may install it by using the `install.packages` command and then load its functions into our session by calling the `library` command.
+
+
+```{r, message=FALSE, warning=FALSE}
+library(countrycode)
+```
+
+The `countrycode` package provides an equivocally function. Check out the function documentation by typing `help(countrycode)` into your console.
+
+Once we know how to use the function, we apply it to get the Continent each country belongs to and assign the result to a new column in our data set.
+
+```{r}
+df["Continent"] = countrycode(df$location_name, 
+                              origin = 'country.name', 
+                              destination = 'continent')
+dim(df)
+```
+
+We get some warnings. These indicate that not for all entries in the `location_name` column a corresponding Continent was found.
+
+After checking the results we decide to exclude those rows for which no Continent could be assigned. 
+
+```{r}
+df = df[complete.cases(df),]
+dim(df)
+```
+
+
+## Data analysis
+
+For the purpose of analysis we make use of the `dplyr` package for data munging. For plotting we rely on the `ggplot2` package. Both packages are part of the [`tidyverse` ecosystem](https://www.tidyverse.org/) and offer an consistent API for data munging, analysis and more.
+
+These package are specifically designed to facilitate the application of the [_split-apply-combine_](https://www.jstatsoft.org/article/view/v040i01) approach. 
+
+```{r, message=FALSE, warning=FALSE}
+library(dplyr)
+library(ggplot2)
+```
+
+
+> **Research question: What is the mean number of smoked cigarettes per Continent over time?**
+
+**Analysis**
+
+```{r}
+df_grouped_continents = df %>%
+  group_by(Continent,year_id) %>% 
+  summarise(mean_val=mean(val))
+```
+
+
+**Plotting**
+```{r}
+ggplot(aes(x=year_id, y=mean_val, color=Continent),
+       data=df_grouped_continents) + 
+  geom_line() + 
+  ggtitle("Mean number of cigarettes") +
+  theme(axis.title=element_blank()) +
+  scale_colour_discrete(name="Continent")
+```
+
+
+***
+
+> **Research question: What is the mean number of smoked cigarettes by gender per Continent over time?**
+
+**Analysis**
+
+```{r}
+df_grouped_ages = df %>%
+  group_by(Continent, year_id, sex_label) %>% 
+  summarise(mean_val=mean(val))
+```
+
+
+**Plotting**
+
+```{r}
+ggplot(aes(x=year_id, y=mean_val, color=sex_label),
+       data=df_grouped_ages) + 
+  geom_line() + 
+  facet_grid(~Continent) + 
+  ggtitle("Mean number of cigarettes") +
+  theme_bw() +
+  theme(axis.title=element_blank(),
+        axis.text.x = element_text(angle = 45, hjust = 1)) +
+  scale_colour_discrete(name="Gender")
+```
+
+
+***
+
+> **Research question: What is the mean number of smoked cigarettes for young adults per Continent over time?**
+
+**Analysis**
+
+```{r }
+age_groups = c("15 to 19", "20 to 24", "25 to 29")
+
+df_grouped_young_adults = df %>% 
+  filter(age_group_name %in% age_groups)  %>%
+  group_by(Continent, year_id, age_group_name) %>% 
+  summarise(mean_val=mean(val)) 
+  
+```
+
+
+**Plotting**
+
+```{r}
+ggplot(aes(x=year_id, y=mean_val, color=age_group_name),
+       data=df_grouped_young_adults) + 
+  geom_line() + 
+  facet_grid(~Continent) + 
+  ggtitle("Mean number of cigarettes") +
+  theme_bw() +
+  theme(axis.title=element_blank(),
+        axis.text.x = element_text(angle = 45, hjust = 1)) +
+  scale_colour_discrete(name="Age groups")
+```
+
+
+***
+
+
+
+
+
+
