@@ -3,13 +3,13 @@ title: "Students Seminar @Charite"
 author: "Joachim Krois"
 date: '2018-03-28'
 output:
-  pdf_document:
-    toc: yes
   html_document:
     code_folding: show
     collapsed: no
     toc: yes
     toc_float: yes
+  pdf_document:
+    toc: yes
 subtitle: The tidyverse
 always_allow_html: yes
 urlcolor: magenta

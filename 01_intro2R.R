@@ -72,6 +72,7 @@ floor(pi)
 ceiling(pi)
 
 
+
 ## Contributed packages
 ## ========================================================
 #install.packages("PACKAGE_NAME")
@@ -105,10 +106,6 @@ max(s)
 min(s)
 sum(s)
 paste("The sequence 's' contains", length(s), "components")
-args(sample)
-sample(x = s, size = 5, replace = TRUE)
-sample(replace = TRUE, size = 5, x = s)
-sample(s, 5, TRUE)
 
 
 ## Vector Arithmetic

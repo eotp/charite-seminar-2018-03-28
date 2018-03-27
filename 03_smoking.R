@@ -30,6 +30,8 @@ dim(df)
 # EDA 
 unique(df$sex_label)
 unique(df$age_group_name)
+locations_num = length(unique(df$location_name))
+locations_num
 range(df$year_id)
 boxplot(df$val, horizontal = TRUE)
 

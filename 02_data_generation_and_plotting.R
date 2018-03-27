@@ -27,7 +27,7 @@ rnorm(n = 10, mean = 0, sd = 1)
 x = rnorm(n = 100, mean = 12, sd = 4)
 y = rnorm(n = 85, mean = 13, sd = 3.2)
 
-
+hist(x)
 hist(x, main="my histogram")
 hist(x, main="my histogram", xlab = "")
 
@@ -56,7 +56,7 @@ t.test(x, y, alternative = "two.sided", var.equal = TRUE)
 
 
 x = seq(from=1, to=25, length.out=100)
-y = 10+2.5*x + rnorm(x, mean = 0, sd=jitter(25,3))
+y = 10+2.5*x + rnorm(x, mean = 0, sd=15)
 
 plot(x,y)
 
@@ -72,13 +72,13 @@ summary(model)
 
 
 # predictions
-predict(model, data.frame(x=30))
+predict(model, data.frame(x=20))
 
 newdata = data.frame(x=x) 
 conf = predict(model, newdata, 
                interval="confidence", level = 0.99)
 
-lines(x, conf[,'lwr'])
-lines(x, conf[,'upr'])
+lines(x, conf[,'lwr'], col="blue")
+lines(x, conf[,'upr'], col="blue")
 
 
